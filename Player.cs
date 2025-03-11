@@ -10,7 +10,7 @@ namespace DungeonExplorer
         // The player's health, which is read-only after initialisation.
         public int Health { get; private set; }
         // The player's inventory, in form of a list of items.
-        private List<string> inventory = new List<string>();
+        private List<string> _inventory = new List<string>();
 
         // Initialises the player with a name and health.
         public Player(string name, int health) 
@@ -21,16 +21,16 @@ namespace DungeonExplorer
         // Adds an item to the player's inventory if it's not already present there.
         public void PickUpItem(string item)
         {
-            if (!inventory.Contains(item))
+            if (!_inventory.Contains(item))
             {
-                inventory.Add(item);
+                _inventory.Add(item);
             }
         }
         // Returns a string representation of the player's inventory.
         public string InventoryContents()
         {
             // Return "Empty" if the inventory is empty, otherwise join items with commas.
-            return inventory.Count == 0 ? "Empty" : string.Join(", ", inventory);
+            return _inventory.Count == 0 ? "Empty" : string.Join(", ", _inventory);
         }
     }
 }

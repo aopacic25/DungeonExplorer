@@ -8,11 +8,11 @@ namespace DungeonExplorer
     internal class Game
     {
         // Represents the player, tracking their name, health, and inventory.
-        private Player player;
+        private Player _player;
         // A list of Room objects representing the dungeon.
-        private List<Room> rooms;
+        private List<Room> _rooms;
         // Tracks the index of the current room in the rooms list.
-        private int currentRoomIndex;
+        private int _currentRoomIndex;
 
         // Initialises the game by creating the player and rooms.
         public Game()
@@ -25,11 +25,11 @@ namespace DungeonExplorer
         private void ResetGame()
         {
             // Initialise the player with a name and health.
-            player = new Player("Adventurer", 100);
+            _player = new Player("Adventurer", 100);
 
             // Initialise the rooms list with three Room objects.
-            rooms = new List<Room>
-    {
+            _rooms = new List<Room>
+            {
                 new Room("Dungeon Entrance",
                          "You are at the entrance of the dungeon.",
                          "A rusty key lies on the ground.",
@@ -42,10 +42,10 @@ namespace DungeonExplorer
                          "You find yourself in a ranger's resting place.",
                          "A longbow leans against the wall.",
                          "longbow")
-    };
+            };
 
             // Start in the first room by resetting the room index.
-            currentRoomIndex = 0;
+            _currentRoomIndex = 0;
         }
 
         // Asks the player if they want to replay the game.
@@ -85,7 +85,7 @@ namespace DungeonExplorer
                 while (inGame)
                 {
                     // Display the current room's name.
-                    Console.WriteLine($"\nYou are in the {rooms[currentRoomIndex].Name}.");
+                    Console.WriteLine($"\nYou are in the {_rooms[_currentRoomIndex].Name}.");
                     // Prompt the player for input.
                     Console.Write("What would you like to do? ");
                     // Read input and convert to lowercase.
@@ -96,24 +96,24 @@ namespace DungeonExplorer
                     {
                         case "look":
                             // Display the current room's description. 
-                            Console.WriteLine(rooms[currentRoomIndex].GetDescription());
+                            Console.WriteLine(_rooms[_currentRoomIndex].GetDescription());
                             break;
 
                         case "status":
                             // Display the player's health and inventory.
-                            Console.WriteLine($"Health: {player.Health}, Inventory: {player.InventoryContents()}");
+                            Console.WriteLine($"Health: {_player.Health}, Inventory: {_player.InventoryContents()}");
                             break;
                     
                         case "pickup":
                             // Attempt to pick up an item in the current room.
-                            string item = rooms[currentRoomIndex].GetItem();
+                            string item = _rooms[_currentRoomIndex].GetItem();
                             if (item != null)
                             {
-                                player.PickUpItem(item);
+                                _player.PickUpItem(item);
                                 // Add the item to the player's inventory.
                                 Console.WriteLine($"You picked up the {item}.");
                                 // Remove the item from the room.
-                                rooms[currentRoomIndex].RemoveItem();
+                                _rooms[_currentRoomIndex].RemoveItem();
                             }
                             else
                             {
@@ -123,10 +123,10 @@ namespace DungeonExplorer
 
                         case "north":
                             // Move to the room to the north, if possible.
-                            if (currentRoomIndex < rooms.Count - 1)
+                            if (_currentRoomIndex < _rooms.Count - 1)
                             {
                                 // Increment the room index.
-                                currentRoomIndex++;
+                                _currentRoomIndex++;
                                 Console.WriteLine("You move north.");
                             }
                             else
@@ -137,9 +137,9 @@ namespace DungeonExplorer
 
                         case "south":
                             // Move to the room to the north, if possible.
-                            if (currentRoomIndex > 0)
+                            if (_currentRoomIndex > 0)
                             {
-                                currentRoomIndex--;
+                                _currentRoomIndex--;
                                 // Decrement the room index.
                                 Console.WriteLine("You move south.");
                             }
