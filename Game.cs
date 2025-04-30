@@ -1,66 +1,77 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Media;
+using System.Linq;
 
 namespace DungeonExplorer
 {
-    // Manages the core game logic.
     internal class Game
     {
-        // Represents the player, tracking their name, health, and inventory.
         private Player _player;
-        // A list of Room objects representing the dungeon.
-        private List<Room> _rooms;
-        // Tracks the index of the current room in the rooms list.
-        private int _currentRoomIndex;
+        private GameMap _gameMap;
 
-        // Initialises the game by creating the player and rooms.
+        private bool _inCombat = false;
+
         public Game()
         {
-            // Call ResetGame to initialise the game state.
             ResetGame();
         }
         
-        // Resets the game state to its initial values.
         private void ResetGame()
         {
-            // Initialise the player with a name and health.
             _player = new Player("Adventurer", 100);
 
-            // Initialise the rooms list with three Room objects.
-            _rooms = new List<Room>
-            {
-                new Room("Dungeon Entrance",
-                         "You are at the entrance of the dungeon.",
-                         "A rusty key lies on the ground.",
-                         "rusty key"),
-                new Room("Abandoned Armoury",
-                         "You enter an abandoned armoury.",
-                         "An iron sword rests on a table.",
-                         "iron sword"),
-                new Room("Ranger's Rest",
-                         "You find yourself in a ranger's resting place.",
-                         "A longbow leans against the wall.",
-                         "longbow")
-            };
+            _gameMap = new GameMap();
 
-            // Start in the first room by resetting the room index.
-            _currentRoomIndex = 0;
+            var rustyKey = new Key("Rusty Key");
+            var ironSword = new Weapon("Iron Sword", damage: 10);
+            var healthPotion = new Potion("Health Potion", heal: 20);
+
+            var goblinScav = new Monster("Goblin Scavenger", health: 30, damage: 5);
+            var draugr = new Monster("Draugr", health: 40, damage: 8);
+
+            var entrance = new Room(
+                "Dungeon Entrance",
+                "You are at the entrance of the dungeon.",
+                item: rustyKey
+            );
+
+            var armoury = new Room(
+                "Abandoned Armoury",
+                "You enter an abandoned armoury.",
+                item: ironSword,
+                monster: goblinScav   
+            );
+
+            var rangersRest = new Room(
+                "Ranger's Rest",
+                "You find yourself in a ranger's resting place.",
+                item: healthPotion,
+                monster: draugr
+            );
+
+            _gameMap.AddRoom(entrance);
+            _gameMap.AddRoom(armoury);
+            _gameMap.AddRoom(rangersRest);
+
+            _gameMap.ConnectRooms(entrance, "north", armoury);
+            _gameMap.ConnectRooms(armoury, "south", entrance);
+            _gameMap.ConnectRooms(armoury, "north", rangersRest);
+            _gameMap.ConnectRooms(rangersRest, "south", armoury);
+
+            _gameMap.SetCurrentRoom(entrance);
+
+
         }
 
-        // Asks the player if they want to replay the game.
         private bool AskToReplay()
         {
             Console.WriteLine("Would you like to play again? (y/n): ");
             string input = Console.ReadLine().ToLower();
 
-            // If the user chooses to replay, reset the game state.
             if (input == "y")
             {
                 ResetGame();
                 return true;
             }
-            // If the user chooses not to replay, exit the program.
             else
             {
                 Console.WriteLine("Farewell, Adventurer.");
@@ -69,51 +80,46 @@ namespace DungeonExplorer
             }
         }
         
-        // Begin the game and handle the main game loop.
         public void Start()
         {
-            // Controls the outer game loop for replay functionality.
             bool playing = true;
             while(playing)
             {
-                // Display a welcome message and instructions.
                 Console.WriteLine("The Dungeon awaits, Adventurer.");
-                Console.WriteLine("Type 'look' to view the room, 'status' to check your health and inventory, 'pickup' to pick up an item, 'north' to go north, 'south' to go south, or 'exit' to quit.");
             
-                // Controls the inner game loop, for current game session.
                 bool inGame = true;
                 while (inGame)
                 {
-                    // Display the current room's name.
-                    Console.WriteLine($"\nYou are in the {_rooms[_currentRoomIndex].Name}.");
-                    // Prompt the player for input.
-                    Console.Write("What would you like to do? ");
-                    // Read input and convert to lowercase.
+                    Room currentRoom = _gameMap.CurrentRoom;
+
+                    if (!_inCombat)
+                    {
+                        Console.WriteLine("\nCommands: look, status, pickup, use, attack, north, south, exit");
+                        Console.Write("\nWhat would you like to do? ");
+                    }
                     string input = Console.ReadLine().ToLower();
 
-                    // Process the player's input.
                     switch (input)
                     {
-                        case "look":
-                            // Display the current room's description. 
-                            Console.WriteLine(_rooms[_currentRoomIndex].GetDescription());
+                        case "look": 
+                            Console.WriteLine($"\n{currentRoom.GetDescription()}");
                             break;
 
                         case "status":
-                            // Display the player's health and inventory.
-                            Console.WriteLine($"Health: {_player.Health}, Inventory: {_player.InventoryContents()}");
+                            Console.WriteLine($"Health: {_player.Health}, Inventory: {_player.Inventory.Contents()}");
                             break;
                     
                         case "pickup":
-                            // Attempt to pick up an item in the current room.
-                            string item = _rooms[_currentRoomIndex].GetItem();
+                            if (_inCombat)
+                            {
+                                Console.WriteLine("You can't pick up items during combat.");
+                                break;
+                            }
+                            Item item = currentRoom.TakeItem();
                             if (item != null)
                             {
-                                _player.PickUpItem(item);
-                                // Add the item to the player's inventory.
-                                Console.WriteLine($"You picked up the {item}.");
-                                // Remove the item from the room.
-                                _rooms[_currentRoomIndex].RemoveItem();
+                                _player.Inventory.Add(item);
+                                Console.WriteLine($"You picked up {item.Name}.");
                             }
                             else
                             {
@@ -121,46 +127,138 @@ namespace DungeonExplorer
                             }
                             break;
 
-                        case "north":
-                            // Move to the room to the north, if possible.
-                            if (_currentRoomIndex < _rooms.Count - 1)
+                        case "use":
+                            Console.WriteLine("Which item? (Type its name): ");
+                            string itemName = Console.ReadLine();
+                            Item itemToUse = _player.Inventory.GetAllItems()
+                                .FirstOrDefault(i => i.Name.Equals(itemName, StringComparison.OrdinalIgnoreCase));
+
+                            if (itemToUse != null)
                             {
-                                // Increment the room index.
-                                _currentRoomIndex++;
-                                Console.WriteLine("You move north.");
+                                itemToUse.Use(_player);
+                                _player.Inventory.Remove(itemToUse);
                             }
                             else
                             {
-                                Console.WriteLine("You cannot go further north.");
+                                Console.WriteLine("Item not found in inventory.");
                             }
                             break;
 
-                        case "south":
-                            // Move to the room to the north, if possible.
-                            if (_currentRoomIndex > 0)
+                        case "attack":
+                            Monster monster = currentRoom.GetMonster();
+                            if (monster != null)
                             {
-                                _currentRoomIndex--;
-                                // Decrement the room index.
-                                Console.WriteLine("You move south.");
+                                _inCombat = true;
+                                Console.WriteLine($"\n=== COMBAT BEGINS ===");
+                                Console.WriteLine($"You face {monster.Name} (Health: {monster.Health})");
+
+                                while (_inCombat && monster.Health > 0 && _player.Health > 0)
+                                {
+                                    Console.WriteLine($"\nYour Health: {_player.Health} | Enemy Health: {monster.Health}");
+                                    Console.Write("Combat command (attack/use/flee): ");
+                                    string combatCmd = Console.ReadLine().ToLower();
+
+                                    switch (combatCmd)
+                                    {
+                                        case "attack":
+                                            Weapon bestWeapon = _player.Inventory.GetWeapons()
+                                                .OrderByDescending(w => w.Damage)
+                                                .FirstOrDefault();
+
+                                            if (bestWeapon != null)
+                                            {
+                                                Console.WriteLine($"You attack with {bestWeapon.Name}.");
+                                                monster.TakeDamage(bestWeapon.Damage);
+                                            }
+                                            else
+                                            {
+                                                Console.WriteLine("You punch the enemy for 1 damage.");
+                                                monster.TakeDamage(1);
+                                            }
+
+                                            if (monster.Health > 0)
+                                            {
+                                                monster.Attack(_player);
+                                            }
+                                            else
+                                            {
+                                                Console.WriteLine($"You defeated the {monster.Name}.");
+                                                _inCombat = false;
+                                            }
+                                            break;
+                                        
+                                        case "flee":
+                                            Console.WriteLine("You disengage from combat.");
+                                            _inCombat = false;
+                                            break;
+
+                                        case var useCmd when useCmd.StartsWith("use"):
+                                            string useItemName = useCmd.Substring(4).Trim();
+                                            Item combatItem = _player.Inventory.GetAllItems()
+                                                .FirstOrDefault(i => i.Name.Equals(useItemName, StringComparison.OrdinalIgnoreCase));
+                                            
+                                            if (combatItem != null)
+                                            {
+                                                combatItem.Use(_player);
+                                                _player.Inventory.Remove(combatItem);
+                                                if (monster.Health > 0) monster.Attack(_player);
+                                            }
+                                            else
+                                            {
+                                                Console.WriteLine("Item not found.");
+                                            }
+                                            break;
+
+                                        default:
+                                            Console.WriteLine("Invalid combat command!");
+                                            break;
+                                    }   
+                                }
+                                _inCombat = false;
                             }
                             else
                             {
-                                Console.WriteLine("You cannot go further south.");
+                                Console.WriteLine("There are no enemies here.");
+                            }
+                            break;
+
+                        case "north":
+                        case "south":
+                            if (_inCombat)
+                            {
+                                Console.WriteLine("You can't move during combat!");
+                                break;
+                            }
+                            Room nextRoom = _gameMap.GetAdjacentRoom(currentRoom, input);
+                            if (nextRoom != null)
+                            {
+                                _gameMap.SetCurrentRoom(nextRoom);
+                                Console.WriteLine($"You move {input}.");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"You can't go {input}.");
                             }
                             break;
 
                         case "exit":
-                            // Exit the current game session.
                             inGame = false;
-                            // Ask if the player wants to replay.
                             playing = AskToReplay();
+                            if (playing) ResetGame();
                             break;
                         
 
                         default:
-                            // Handle invalid commands.
-                            Console.WriteLine("Invalid command. Try 'look', 'status', 'pickup', 'north', 'south', or 'exit'.");
+                            Console.WriteLine("Invalid command. Try look, status, pickup, use, attack, north, south, or exit.");
                             break;
+                    }
+
+                    if (_player.Health <= 0)
+                    {
+                        Console.WriteLine("Game Over!");
+                        playing = AskToReplay();
+                        if (playing) ResetGame();
+                        break;
                     }
                 }
             }
