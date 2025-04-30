@@ -12,7 +12,10 @@ namespace DungeonExplorer
     {
         public int Damage { get; }
         public Weapon(string name, int damage) : base(name) => Damage = damage;
-        public override void Use(Player player) => Console.WriteLine($"You attack with {Name} (Damage: {Damage})");    
+        public override void Use(Player player)
+        {
+            Console.WriteLine($"No enemies to attack with {Name}.");
+        }   
     }
 
     public class Potion : Item
@@ -21,8 +24,14 @@ namespace DungeonExplorer
         public Potion(string name, int heal) : base(name) => HealAmount = heal;
         public override void Use(Player player)
         {
+            if (player.Health >= 100)
+            {
+                Console.WriteLine($"You're already at full health.");
+                return;
+            }
+
             player.Heal(HealAmount);
-            Console.WriteLine($"You drank {Name} and healed {HealAmount} HP!");
+            Console.WriteLine($"You drank {Name} and healed {HealAmount} HP.");
         }
     
     }

@@ -23,6 +23,7 @@ namespace DungeonExplorer
 
             var rustyKey = new Key("Rusty Key");
             var ironSword = new Weapon("Iron Sword", damage: 10);
+            var oakBow = new Weapon("Oak Bow", damage: 15);
             var healthPotion = new Potion("Health Potion", heal: 20);
 
             var goblinScav = new Monster("Goblin Scavenger", health: 30, damage: 5);
@@ -31,7 +32,7 @@ namespace DungeonExplorer
             var entrance = new Room(
                 "Dungeon Entrance",
                 "You are at the entrance of the dungeon.",
-                item: rustyKey
+                item: healthPotion
             );
 
             var armoury = new Room(
@@ -44,7 +45,7 @@ namespace DungeonExplorer
             var rangersRest = new Room(
                 "Ranger's Rest",
                 "You find yourself in a ranger's resting place.",
-                item: healthPotion,
+                item: oakBow,
                 monster: draugr
             );
 
@@ -106,41 +107,59 @@ namespace DungeonExplorer
                             break;
 
                         case "status":
-                            Console.WriteLine($"Health: {_player.Health}, Inventory: {_player.Inventory.Contents()}");
+                            Console.WriteLine($"\nHealth: {_player.Health}, Inventory: {_player.Inventory.Contents()}");
                             break;
                     
                         case "pickup":
                             if (_inCombat)
                             {
-                                Console.WriteLine("You can't pick up items during combat.");
+                                Console.WriteLine("\nYou can't pick up items during combat.");
                                 break;
                             }
                             Item item = currentRoom.TakeItem();
                             if (item != null)
                             {
                                 _player.Inventory.Add(item);
-                                Console.WriteLine($"You picked up {item.Name}.");
+                                Console.WriteLine($"\nYou picked up {item.Name}.");
                             }
                             else
                             {
-                                Console.WriteLine("There is nothing to pick up here.");
+                                Console.WriteLine("\nThere is nothing to pick up here.");
                             }
                             break;
 
                         case "use":
-                            Console.WriteLine("Which item? (Type its name): ");
+                            Console.WriteLine("\nWhich item? (Type its name): ");
                             string itemName = Console.ReadLine();
                             Item itemToUse = _player.Inventory.GetAllItems()
                                 .FirstOrDefault(i => i.Name.Equals(itemName, StringComparison.OrdinalIgnoreCase));
 
                             if (itemToUse != null)
                             {
-                                itemToUse.Use(_player);
-                                _player.Inventory.Remove(itemToUse);
+                                if (itemToUse is Potion potion)
+                                {
+                                    if (_player.Health < 100)
+                                    {
+                                        potion.Use(_player);
+                                        _player.Inventory.Remove(potion);
+                                    }
+                                    else
+                                    {
+                                        potion.Use(_player);
+                                    }
+                                }
+                                else if (itemToUse is Weapon)
+                                {
+                                    itemToUse.Use(_player);
+                                }
+                                else
+                                {
+                                    itemToUse.Use(_player);
+                                }
                             }
                             else
                             {
-                                Console.WriteLine("Item not found in inventory.");
+                                Console.WriteLine("\nItem not found in inventory.");
                             }
                             break;
 
@@ -155,27 +174,39 @@ namespace DungeonExplorer
                                 while (_inCombat && monster.Health > 0 && _player.Health > 0)
                                 {
                                     Console.WriteLine($"\nYour Health: {_player.Health} | Enemy Health: {monster.Health}");
-                                    Console.Write("Combat command (attack/use/flee): ");
+                                    Console.Write("Combat command (attack/use potion/flee): ");
                                     string combatCmd = Console.ReadLine().ToLower();
 
                                     switch (combatCmd)
                                     {
                                         case "attack":
-                                            Weapon bestWeapon = _player.Inventory.GetWeapons()
-                                                .OrderByDescending(w => w.Damage)
-                                                .FirstOrDefault();
-
-                                            if (bestWeapon != null)
-                                            {
-                                                Console.WriteLine($"You attack with {bestWeapon.Name}.");
-                                                monster.TakeDamage(bestWeapon.Damage);
-                                            }
-                                            else
+                                            var weapons = _player.Inventory.GetWeapons().ToList();
+                                            if (weapons.Count == 0)
                                             {
                                                 Console.WriteLine("You punch the enemy for 1 damage.");
                                                 monster.TakeDamage(1);
                                             }
+                                            else
+                                            {
+                                                Console.WriteLine("Choose a weapon:");
+                                                for (int i = 0; i < weapons.Count; i++)
+                                                {
+                                                    Console.WriteLine($"{i + 1}. {weapons[i].Name} (Damage: {weapons[i].Damage})");
+                                                }
 
+                                                Console.Write("Enter weapon number: ");
+                                                if (int.TryParse(Console.ReadLine(), out int weaponChoice) && weaponChoice > 0 && weaponChoice <= weapons.Count)
+                                                {
+                                                    Weapon chosenWeapon = weapons[weaponChoice - 1];
+                                                    Console.WriteLine($"You attack with {chosenWeapon.Name}.");
+                                                    monster.TakeDamage(chosenWeapon.Damage);
+                                                }
+                                                else
+                                                {
+                                                    Console.WriteLine("Invalid choice. Punching instead for 1 damage.");
+                                                    monster.TakeDamage(1);
+                                                }
+                                            }
                                             if (monster.Health > 0)
                                             {
                                                 monster.Attack(_player);
@@ -192,20 +223,24 @@ namespace DungeonExplorer
                                             _inCombat = false;
                                             break;
 
-                                        case var useCmd when useCmd.StartsWith("use"):
-                                            string useItemName = useCmd.Substring(4).Trim();
-                                            Item combatItem = _player.Inventory.GetAllItems()
-                                                .FirstOrDefault(i => i.Name.Equals(useItemName, StringComparison.OrdinalIgnoreCase));
-                                            
-                                            if (combatItem != null)
+                                        case "use potion":
+                                            Console.WriteLine("\nWhich potion? (Type its name):");
+                                            string potionName = Console.ReadLine();
+                                            Potion potion = _player.Inventory.GetPotions()
+                                                .FirstOrDefault(p => p.Name.Equals(potionName, StringComparison.OrdinalIgnoreCase));
+
+                                            if (potion != null)
                                             {
-                                                combatItem.Use(_player);
-                                                _player.Inventory.Remove(combatItem);
+                                                potion.Use(_player);
+                                                if (potion is Potion && _player.Health < 100)
+                                                {
+                                                    _player.Inventory.Remove(potion);
+                                                }
                                                 if (monster.Health > 0) monster.Attack(_player);
                                             }
                                             else
                                             {
-                                                Console.WriteLine("Item not found.");
+                                                Console.WriteLine("Potion not found.");
                                             }
                                             break;
 
