@@ -138,7 +138,7 @@ namespace DungeonExplorer
                             {
                                 if (itemToUse is Potion potion)
                                 {
-                                    if (_player.Health < 100)
+                                    if (_player.Health < Creature.MaxHealth)
                                     {
                                         potion.Use(_player);
                                         _player.Inventory.Remove(potion);
@@ -214,6 +214,7 @@ namespace DungeonExplorer
                                             else
                                             {
                                                 Console.WriteLine($"You defeated the {monster.Name}.");
+                                                currentRoom.RemoveMonster();
                                                 _inCombat = false;
                                             }
                                             break;
@@ -232,7 +233,7 @@ namespace DungeonExplorer
                                             if (potion != null)
                                             {
                                                 potion.Use(_player);
-                                                if (potion is Potion && _player.Health < 100)
+                                                if (_player.Health < Creature.MaxHealth)
                                                 {
                                                     _player.Inventory.Remove(potion);
                                                 }
@@ -248,6 +249,11 @@ namespace DungeonExplorer
                                             Console.WriteLine("Invalid combat command!");
                                             break;
                                     }   
+                                }
+
+                                if (monster.Health <= 0)
+                                {
+                                    currentRoom.RemoveMonster();
                                 }
                                 _inCombat = false;
                             }

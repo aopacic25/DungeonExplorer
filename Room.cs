@@ -8,6 +8,11 @@
         private Item _item;
         private Monster _monster;
 
+        public void RemoveMonster()
+        {
+            _monster = null;
+        }
+
         public Room(string name, string description, Item item = null, Monster monster = null)
         {
             Name = name;
@@ -19,7 +24,7 @@
         public string GetDescription() =>
             $"{_description}\n" +
             (_item != null ? $"You see a {_item.Name}.\n" : "") +
-            (_monster != null ? $"A {_monster.Name} dwells here!\n" : "");
+            (_monster != null && _monster.Health > 0 ? $"A {_monster.Name} dwells here.\n" : "");
 
         public Item TakeItem()
         {

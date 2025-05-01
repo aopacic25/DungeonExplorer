@@ -4,6 +4,7 @@ namespace DungeonExplorer
     {
         public string Name { get; protected set; }
         public int Health { get; protected set; }
+        public const int MaxHealth = 100;
 
         protected Creature(string name, int health)
         {
@@ -13,7 +14,8 @@ namespace DungeonExplorer
 
         public void Heal(int amount)
         {
-            Health += amount;
+            Health = Math.Min(Health + amount, MaxHealth);
+            Console.WriteLine($"Healed {amount} HP. Current health: {Health}/{MaxHealth}");
         }
 
         public virtual void TakeDamage(int damage)

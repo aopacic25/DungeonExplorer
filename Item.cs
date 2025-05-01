@@ -24,14 +24,21 @@ namespace DungeonExplorer
         public Potion(string name, int heal) : base(name) => HealAmount = heal;
         public override void Use(Player player)
         {
-            if (player.Health >= 100)
+            if (player.Health >= Creature.MaxHealth)
             {
-                Console.WriteLine($"You're already at full health.");
+                Console.WriteLine($"You're already at full health ({Creature.MaxHealth}/{Creature.MaxHealth}).");
                 return;
             }
 
+            int oldHealth = player.Health;
             player.Heal(HealAmount);
-            Console.WriteLine($"You drank {Name} and healed {HealAmount} HP.");
+            int actualHeal = player.Health - oldHealth;
+
+            if (actualHeal < HealAmount)
+            {
+                Console.WriteLine($"The potion healed you to full health ({Creature.MaxHealth}/{Creature.MaxHealth}).");
+            }
+            
         }
     
     }
