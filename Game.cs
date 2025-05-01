@@ -3,32 +3,46 @@ using System.Linq;
 
 namespace DungeonExplorer
 {
+
+    // Main game controller managing game state and player interactions.
+    // Handles the core game loop and command processing.
     internal class Game
     {
+        // Player character instance
         private Player _player;
+        // Dungeon layout
         private GameMap _gameMap;
 
+        // Flag tracking combat state
         private bool _inCombat = false;
 
+        // Initialises game state and creates dungeon layout
         public Game()
         {
             ResetGame();
         }
         
+        // Resets all game state to initial conditions
+        // Called when starting a new game
         private void ResetGame()
         {
+            // Initialises player
             _player = new Player("Adventurer", 100);
 
+            // Sets up game world
             _gameMap = new GameMap();
 
+            // Creates items
             var rustyKey = new Key("Rusty Key");
             var ironSword = new Weapon("Iron Sword", damage: 10);
             var oakBow = new Weapon("Oak Bow", damage: 15);
             var healthPotion = new Potion("Health Potion", heal: 20);
 
+            // Creates monsters
             var goblinScav = new Monster("Goblin Scavenger", health: 30, damage: 5);
             var draugr = new Monster("Draugr", health: 40, damage: 8);
 
+            // Builds rooms
             var entrance = new Room(
                 "Dungeon Entrance",
                 "You are at the entrance of the dungeon.",
@@ -49,20 +63,23 @@ namespace DungeonExplorer
                 monster: draugr
             );
 
+            // Assembles map
             _gameMap.AddRoom(entrance);
             _gameMap.AddRoom(armoury);
             _gameMap.AddRoom(rangersRest);
 
+            // Bidirectionally connects rooms
             _gameMap.ConnectRooms(entrance, "north", armoury);
             _gameMap.ConnectRooms(armoury, "south", entrance);
             _gameMap.ConnectRooms(armoury, "north", rangersRest);
             _gameMap.ConnectRooms(rangersRest, "south", armoury);
 
+            // Sets starting location
             _gameMap.SetCurrentRoom(entrance);
 
 
         }
-
+        // Allows the user to replay the game
         private bool AskToReplay()
         {
             Console.WriteLine("Would you like to play again? (y/n): ");
@@ -81,6 +98,7 @@ namespace DungeonExplorer
             }
         }
         
+        // Main game loop handling player input and game state updates
         public void Start()
         {
             bool playing = true;
@@ -101,15 +119,16 @@ namespace DungeonExplorer
                     string input = Console.ReadLine().ToLower();
 
                     switch (input)
-                    {
+                    {   
+                        // Gives player information about the current room
                         case "look": 
                             Console.WriteLine($"\n{currentRoom.GetDescription()}");
                             break;
-
+                        // Shows player character's statistics
                         case "status":
                             Console.WriteLine($"\nHealth: {_player.Health}, Inventory: {_player.Inventory.Contents()}");
                             break;
-                    
+                        // Picks up all the items in the current room
                         case "pickup":
                             if (_inCombat)
                             {
@@ -127,7 +146,8 @@ namespace DungeonExplorer
                                 Console.WriteLine("\nThere is nothing to pick up here.");
                             }
                             break;
-
+                        
+                        // Allows the player to try and use an item out of combat
                         case "use":
                             Console.WriteLine("\nWhich item? (Type its name): ");
                             string itemName = Console.ReadLine();
@@ -155,7 +175,7 @@ namespace DungeonExplorer
                                 Console.WriteLine("\nItem not found in inventory.");
                             }
                             break;
-
+                        // Initiates combat with a monster, if any is present in the room
                         case "attack":
                             Monster monster = currentRoom.GetMonster();
                             if (monster != null)
@@ -172,6 +192,7 @@ namespace DungeonExplorer
 
                                     switch (combatCmd)
                                     {
+                                        // In-combat attack against a monster
                                         case "attack":
                                             var weapons = _player.Inventory.GetWeapons().ToList();
                                             if (weapons.Count == 0)
@@ -211,12 +232,12 @@ namespace DungeonExplorer
                                                 _inCombat = false;
                                             }
                                             break;
-                                        
+                                        // Disengage from combat
                                         case "flee":
                                             Console.WriteLine("You disengage from combat.");
                                             _inCombat = false;
                                             break;
-
+                                        // Lets the player use a potion in-combat
                                         case "use potion":
                                             Console.WriteLine("\nWhich potion? (Type its name):");
                                             string potionName = Console.ReadLine();
@@ -252,7 +273,7 @@ namespace DungeonExplorer
                                 Console.WriteLine("There are no enemies here.");
                             }
                             break;
-
+                        // Allows the player to move back and forth between rooms
                         case "north":
                         case "south":
                             if (_inCombat)

@@ -3,8 +3,12 @@ using System.Diagnostics;
 
 namespace DungeonExplorer
 {
+
+    // Static class containing unit tests for the game.
+    // Tests core game functionality using Debug.Assert() to validate behaviour.
     public static class GameTest
     {
+        // Runs all test cases for the game and outputs results to console
         public static void RunTests()
         {
             Console.WriteLine("Running tests...");
@@ -14,7 +18,7 @@ namespace DungeonExplorer
             TestRoomNavigation();
         }
 
-
+        // Tests Player class initialisation and basic properties
         private static void TestPlayerInitialisation()
         {
             var player = new Player("TestHero", 100);
@@ -22,7 +26,7 @@ namespace DungeonExplorer
             Debug.Assert(player.Name == "TestHero", "Player name should match constructor.");
             Console.WriteLine("Player initialisation passed.");
         }
-
+        // Tests Inventory system functionality
         private static void TestInventoryManagement()
         {
             var player = new Player("TestHero", 100);
@@ -39,7 +43,7 @@ namespace DungeonExplorer
             Debug.Assert(player.Inventory.GetCount(potion) == 0, "Potion should be removed.");
             Console.WriteLine("Inventory management passed."); 
         }
-
+        // Tests game's combat system
         private static void TestCombatMechanics()
         {
             var player = new Player("TestHero", 100);
@@ -54,7 +58,7 @@ namespace DungeonExplorer
             Debug.Assert(monster.Health == 20, "Monster should take 10 damage.");
             Console.WriteLine("Combat mechanics passed.");
         }
-
+        // Test game's room navigation system
         private static void TestRoomNavigation()
         {
             var gameMap = new GameMap();
