@@ -8,7 +8,6 @@ namespace DungeonExplorer
         static void Main(string[] args)
         {
             GameTest.RunTests();
-            return;
             
             Game game = new Game();
             game.Start();

@@ -43,7 +43,7 @@ namespace DungeonExplorer
         private static void TestCombatMechanics()
         {
             var player = new Player("TestHero", 100);
-            var monster = new Monster("Goblin", 30, 5);
+            var monster = new Monster("Goblin", 30, 5) { SilentTestMode = true};
 
             monster.Attack(player);
             Debug.Assert(player.Health == 95, "Player should take 5 damage.");
