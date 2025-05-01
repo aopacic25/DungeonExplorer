@@ -1,48 +1,49 @@
 ﻿namespace DungeonExplorer
 {
-    // Represents a room in the dungeon, with a name, description, and item.
+
+    // Represents a location in the game world containing items and monsters.
+    // Part of the GameMap navigation system.
     public class Room
     {
-        // The room's name, which is read-only after initialisation.
-        public string Name { get; private set; }
-        // The base description of the room, minus the item.
-        private string _roomBaseDescription;
-        // The item part of the room description.
-        private string _roomItemDescription;
-        // The item in the room.
-        private string _item;
+        // Room display name
+        public string Name { get; }
+        // Description of the room when player enters
+        private string _description;
+        // Item present in the room
+        private Item _item;
+        // Monster present in the room
+        private Monster _monster;
 
-        // Initialise the room with a name, base + item description, and item itself.
-        public Room(string name, string roomBaseDescription, string roomItemDescription, string item)
+        // Removes the current monster from the room
+        public void RemoveMonster()
+        {
+            _monster = null;
+        }
+
+        // Creates a new room instance
+        public Room(string name, string description, Item item = null, Monster monster = null)
         {
             Name = name;
-            this._roomBaseDescription = roomBaseDescription;
-            this._roomItemDescription = roomItemDescription;
-            this._item = item;
+            _description = description;
+            _item = item;
+            _monster = monster;
         }
 
-        // Return the room's description, both the base and item part included, if the item hasn't been picked up.
-        public string GetDescription()
-        {
-            // If the item is still in the room, include it in the description
-            if (_item != null)
-            {
-                return $"{_roomBaseDescription} {_roomItemDescription}";
-            }
-            // Otherwise, return only the base description
-            return _roomBaseDescription;
-        }
+        // Generates description including contents
+        public string GetDescription() =>
+            $"{_description}\n" +
+            (_item != null ? $"You see a {_item.Name}.\n" : "") +
+            (_monster != null && _monster.Health > 0 ? $"A {_monster.Name} dwells here.\n" : "");
 
-        // Returns the item in the room, or null if the item has been picked up.
-        public string GetItem()
+        // Removes and returns the room's item, if any
+        public Item TakeItem()
         {
-            return _item;
-        }
-
-        // Removes the item from the room by setting it to null.
-        public void RemoveItem()
-        {
+            var item = _item;
             _item = null;
+            return item;
         }
+
+        // Gets the room's current monster, if any
+        public Monster GetMonster() => _monster;
     }
 }

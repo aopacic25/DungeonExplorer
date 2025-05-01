@@ -3,17 +3,21 @@
 
 namespace DungeonExplorer
 {
-    // The entry point of the application.
+
+    // Main program entry point for the game.
+    // Handles initialisation and test execution.
     internal class Program
     {
-        // Starts the game.
+        // Application entry point
         static void Main(string[] args)
         {
+            // Runs tests before starting game
+            GameTest.RunTests();
             
-            // Create a new Game object.
+            // Initialise and start the main game
             Game game = new Game();
-            // Start the game.
             game.Start();
+            // Keep console window open until key press
             Console.ReadKey();
         }
     }
