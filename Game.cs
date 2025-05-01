@@ -138,15 +138,8 @@ namespace DungeonExplorer
                             {
                                 if (itemToUse is Potion potion)
                                 {
-                                    if (_player.Health < Creature.MaxHealth)
-                                    {
-                                        potion.Use(_player);
-                                        _player.Inventory.Remove(potion);
-                                    }
-                                    else
-                                    {
-                                        potion.Use(_player);
-                                    }
+                                    potion.Use(_player);
+                                    _player.Inventory.Remove(potion);
                                 }
                                 else if (itemToUse is Weapon)
                                 {
@@ -233,10 +226,7 @@ namespace DungeonExplorer
                                             if (potion != null)
                                             {
                                                 potion.Use(_player);
-                                                if (_player.Health < Creature.MaxHealth)
-                                                {
-                                                    _player.Inventory.Remove(potion);
-                                                }
+                                                _player.Inventory.Remove(potion);
                                                 if (monster.Health > 0) monster.Attack(_player);
                                             }
                                             else

@@ -6,6 +6,18 @@ namespace DungeonExplorer
         public string Name { get; }
         protected Item(string name) => Name = name;
         public abstract void Use(Player player);
+
+        public override bool Equals(object obj)
+        {
+            return obj is Item item &&
+                   Name == item.Name &&
+                   GetType() == obj.GetType();
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Name, GetType());
+        }
     }
 
     public class Weapon : Item
